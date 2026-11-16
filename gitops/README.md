@@ -9,13 +9,17 @@ Please make sure that you're forking the following two repositories on GitHub.co
 - (Source Code)[https://github.com/wpernath/quarkus-grumpycat]
 - (Configuration)[https://github.com/wpernath/grumpycat-config]
 
-### b. prepare pipelines
-Then you have to make sure that all the defaults are pointing to YOUR repositories:
+### b. create Quay repositories
+In `quay.io/rh-ee-tkiss`, create `quarkus-grumpycat` and `grumpycat-melonjs` (public if you want to pull them without a pull secret). Create one robot account with write access to both; use its token, not your personal password, for the Secret below. Point the image names in the pipelines and your `grumpycat-config` base/overlays at these repositories, removing the old image digests until your first build.
+
+### c. prepare pipelines
+Then make sure the defaults point to your forks and Quay repositories:
 ```
 FOR EACH pipeline in ${gitops/tekton/pipelines} DO
   spec.params.git-url -> your forked git url
   spec.params.config-git-url -> your forked git url
   spec.params.image-name -> your quay.io or dockerhub.io repository name
+  spec.params.target-image -> your quay.io repository name (staging pipelines)
 END
 ```
 
@@ -23,7 +27,7 @@ OR
 
 You can enhance `gitops/tekton/pipeline.sh` to let you specify those parameters accordingly.
 
-### c. prepare argo cd applications
+### d. prepare argo cd applications
 Finally, you have to open `gitops/argocd/cat-apps.yaml` and
 
 ```
@@ -39,7 +43,7 @@ From `gitops/tekton`, run `./pipeline.sh init` to install the `cat-ci` namespace
 
 These Pipelines use the `git-clone`, `git-cli` and `skopeo-copy` Tasks installed by OpenShift Pipelines in `openshift-pipelines`; the Tekton cluster resolver must be enabled.
 
-Create a Quay robot account with write access to your image repository. Its username is usually `your-quay-account+robot-name`; use its token, not your Quay login password. After logging in with `oc`, create the Secret in `cat-ci` without putting the token in your command history or a local file:
+The robot username is usually `your-quay-account+robot-name`. After logging in with `oc`, create the Secret in `cat-ci` without putting its token in your command history or a local file:
 
 ```bash
 read -rsp 'Quay robot token: ' QUAY_TOKEN; printf '\n'
