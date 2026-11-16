@@ -11,7 +11,7 @@ spec:
   source:
     path: config/overlays/dev
     repoURL: https://github.com/tkiss28/grumpycat-config.git
-    targetRevision: aws-grumpycat
+    targetRevision: main
   syncPolicy:
     automated:
       prune: true
@@ -31,7 +31,7 @@ spec:
   source:
     path: config/overlays/stage
     repoURL: https://github.com/tkiss28/grumpycat-config.git
-    targetRevision: aws-grumpycat
+    targetRevision: main
   syncPolicy:
     automated:
       prune: true
@@ -51,7 +51,7 @@ spec:
   source:
     path: config/overlays/prod
     repoURL: https://github.com/tkiss28/grumpycat-config.git
-    targetRevision: aws-grumpycat
+    targetRevision: main
   syncPolicy:
     automated:
       prune: true
