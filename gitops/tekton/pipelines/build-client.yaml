@@ -35,21 +35,25 @@ spec:
   tasks:
     - name: clone-source
       params:
-        - name: url
+        - name: URL
           value: $(params.git-url)
-        - name: revision
+        - name: REVISION
           value: $(params.git-revision)
-        - name: submodules
+        - name: SUBMODULES
           value: 'true'
-        - name: subdirectory
+        - name: SUBDIRECTORY
           value: the-source
-        - name: deleteExisting
+        - name: DELETE_EXISTING
           value: 'true'
-        - name: verbose
+        - name: VERBOSE
           value: 'false'
       taskRef:
-        kind: ClusterTask
-        name: git-clone
+        resolver: cluster
+        params:
+          - name: name
+            value: git-clone
+          - name: namespace
+            value: openshift-pipelines
       workspaces:
         - name: output
           workspace: source
@@ -77,19 +81,23 @@ spec:
           workspace: maven-settings
     - name: clone-config
       params:
-        - name: url
+        - name: URL
           value: $(params.config-git-url)
-        - name: revision
+        - name: REVISION
           value: $(params.config-git-revision)
-        - name: subdirectory
+        - name: SUBDIRECTORY
           value: the-config
-        - name: deleteExisting
+        - name: DELETE_EXISTING
           value: 'true'
-        - name: verbose
+        - name: VERBOSE
           value: 'false'
       taskRef:
-        kind: ClusterTask
-        name: git-clone
+        resolver: cluster
+        params:
+          - name: name
+            value: git-clone
+          - name: namespace
+            value: openshift-pipelines
       workspaces:
         - name: output
           workspace: source

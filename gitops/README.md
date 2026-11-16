@@ -37,6 +37,8 @@ END
 
 From `gitops/tekton`, run `./pipeline.sh init` to install the `cat-ci` namespace, Tasks, Pipelines and `pipeline-bot` ServiceAccount. It does **not** create Secrets. Never put credentials into `infra/secret.yaml` or a public fork.
 
+These Pipelines use the `git-clone`, `git-cli` and `skopeo-copy` Tasks installed by OpenShift Pipelines in `openshift-pipelines`; the Tekton cluster resolver must be enabled.
+
 Create a Quay robot account with write access to your image repository. Its username is usually `your-quay-account+robot-name`; use its token, not your Quay login password. After logging in with `oc`, create the Secret in `cat-ci` without putting the token in your command history or a local file:
 
 ```bash

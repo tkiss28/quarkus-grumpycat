@@ -31,34 +31,39 @@ spec:
   tasks:
     - name: git-clone
       params:
-        - name: url
+        - name: URL
           value: $(params.git-url)
-        - name: deleteExisting
+        - name: DELETE_EXISTING
           value: 'true'
-        - name: verbose
+        - name: VERBOSE
           value: 'true'
-        - name: revision
+        - name: REVISION
           value: $(params.git-revision)
-        - name: subdirectory
+        - name: SUBDIRECTORY
           value: the-config
       taskRef:
-        kind: ClusterTask
-        name: git-clone
+        resolver: cluster
+        params:
+          - name: name
+            value: git-clone
+          - name: namespace
+            value: openshift-pipelines
       workspaces:
         - name: output
           workspace: shared-workspace   
     - name: git-branch
       params:
-        - name: BASE_IMAGE
-          value: >-
-            docker.io/alpine/git:v2.26.2@sha256:23618034b0be9205d9cc0846eb711b12ba4c9b468efdd8a59aac1d7b1a23363f
         - name: GIT_SCRIPT
           value: cd the-config && git checkout -b release-$(params.release-name)
       runAfter:
         - git-clone
       taskRef:
-        kind: ClusterTask
-        name: git-cli
+        resolver: cluster
+        params:
+          - name: name
+            value: git-cli
+          - name: namespace
+            value: openshift-pipelines
       workspaces:
         - name: source
           workspace: shared-workspace
@@ -81,23 +86,23 @@ spec:
 
     - name: tag-image
       params:
-        - name: srcImageURL
+        - name: SOURCE_IMAGE_URL
           value: >-
             docker://$(params.target-image)@$(tasks.extract-digest.results.DIGEST)
-        - name: destImageURL
+        - name: DESTINATION_IMAGE_URL
           value: >-
             docker://$(params.target-image):$(params.release-name)
-        - name: srcTLSverify
-          value: 'false'
-        - name: destTLSverify
-          value: 'false'
       runAfter:
         - extract-digest
       taskRef:
-        kind: ClusterTask
-        name: skopeo-copy
+        resolver: cluster
+        params:
+          - name: name
+            value: skopeo-copy
+          - name: namespace
+            value: openshift-pipelines
       workspaces:
-        - name: images-url
+        - name: images_url
           workspace: shared-workspace
 
     - name: update-release
