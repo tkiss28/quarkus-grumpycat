@@ -4,9 +4,6 @@ metadata:
   name: build-all
 spec:
   params:
-    - description: password of the target image repository
-      name: repository-password
-      type: string
     - description: source branch/tag to use to compile the stuff
       name: git-revision
       type: string
@@ -22,7 +19,6 @@ spec:
           value:
             - build-server
             - '-s pipeline-bot'
-            - '-p repo-password=$(params.repository-password)'
             - '-p git-revision=$(params.git-revision)'
             - '-p config-git-revision=$(params.config-git-revision)'
             - '-w name=source,claimName=builder-pvc'
@@ -39,7 +35,6 @@ spec:
           value:
             - build-client
             - '-s pipeline-bot'
-            - '-p repo-password=$(params.repository-password)'
             - '-p git-revision=$(params.git-revision)'
             - '-p config-git-revision=$(params.config-git-revision)'
             - '-w name=source,claimName=client-builder-pvc'
@@ -97,5 +92,4 @@ spec:
       runAfter:
         - wait-for-client
         - wait-for-server
-
 

@@ -52,6 +52,17 @@ spec:
       #image: docker.io/maven:3.8-eclipse-temurin-17-focal
       image: registry.access.redhat.com/ubi8/openjdk-17:1.14-4.1665493371
       workingDir: $(workspaces.source.path)/$(params.CONTEXT_DIR)
+      env:
+        - name: QUARKUS_CONTAINER_IMAGE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: quay-push-secret
+              key: username
+        - name: QUARKUS_CONTAINER_IMAGE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: quay-push-secret
+              key: password
       command: ["/usr/bin/mvn"]
       args:
         - -B

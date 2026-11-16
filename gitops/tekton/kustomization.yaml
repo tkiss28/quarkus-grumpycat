@@ -36,5 +36,4 @@ resources:
 - pipelines/build-all.yaml
 - pipelines/stage-all.yaml
 
-# please note, you still have to call pipeline.sh init to generate the secrets!
-
+# Create git-user-pass and quay-push-secret separately in cat-ci; see gitops/README.md.

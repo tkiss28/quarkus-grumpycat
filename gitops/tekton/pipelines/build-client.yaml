@@ -32,13 +32,6 @@ spec:
       description: Image to produce
       name: image-name
       type: string
-    - default: tkiss28
-      description: 'username for image repo '
-      name: repo-username
-      type: string
-    - description: password for image repo
-      name: repo-password
-      type: string
   tasks:
     - name: clone-source
       params:
@@ -68,8 +61,6 @@ spec:
             - '-DskipTests'
             - '-Dquarkus.container-image.build=true'
             - '-Dquarkus.container-image.push=true'
-            - '-Dquarkus.container-image.username=$(params.repo-username)'
-            - '-Dquarkus.container-image.password=$(params.repo-password)'
             - '-Dquarkus.container-image.image=$(params.image-name)'
         - name: CONTEXT_DIR
           value: the-source/$(params.git-context)

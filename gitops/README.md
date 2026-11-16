@@ -16,7 +16,6 @@ FOR EACH pipeline in ${gitops/tekton/pipelines} DO
   spec.params.git-url -> your forked git url
   spec.params.config-git-url -> your forked git url
   spec.params.image-name -> your quay.io or dockerhub.io repository name
-  spec.params.repo-username -> your user name on quay.io or dockerhub.io or whereever
 END
 ```
 
@@ -35,23 +34,43 @@ END
 
 
 ## 2. Setup Tekton Pipelines (the CI part)
-In order to initialize the Tekton pipelines, call
+
+From `gitops/tekton`, run `./pipeline.sh init` to install the `cat-ci` namespace, Tasks, Pipelines and `pipeline-bot` ServiceAccount. It does **not** create Secrets. Never put credentials into `infra/secret.yaml` or a public fork.
+
+Create a Quay robot account with write access to your image repository. Its username is usually `your-quay-account+robot-name`; use its token, not your Quay login password. After logging in with `oc`, create the Secret in `cat-ci` without putting the token in your command history or a local file:
 
 ```bash
-$ ./pipeline.sh init --force --git-user <user> \
-	--git-password <pwd> \
-	--registry-user <user> \
-	--registry-password <pwd> 
-  --argo-host <for example openshift-gitops-server-openshift-gitops.apps.work.ocp.lan>
-  --argo-user admin
-  --argo-password <your argocd pass>
+read -rsp 'Quay robot token: ' QUAY_TOKEN; printf '\n'
+printf '%s' "$QUAY_TOKEN" | oc -n cat-ci create secret generic quay-push-secret \
+  --type=kubernetes.io/basic-auth \
+  --from-literal=username='YOUR_QUAY_ROBOT_USERNAME' \
+  --from-file=password=/dev/stdin
+unset QUAY_TOKEN
+oc -n cat-ci annotate secret quay-push-secret tekton.dev/docker-0=https://quay.io
 ```
 
-This call (if given the `--force` flag) will initialize the `cat-ci` namespace for you. This includes
-- all 5 tekton pipelines
-- all custom tasks
-- preparation of the Tekton service account for running the pipelines
-- preparation of the Tekton secret to access GitHub.com and Quay.io
+Both build pipelines read this Secret in the Maven step; the staging pipelines' `skopeo-copy` task uses it via `pipeline-bot`. No password is passed as a pipeline parameter. For the GitOps update step, create a separate GitHub fine-grained token with **Contents: read/write** access to your `grumpycat-config` fork (the public source fork needs no write access):
+
+```bash
+read -rsp 'GitHub token: ' GITHUB_TOKEN; printf '\n'
+printf '%s' "$GITHUB_TOKEN" | oc -n cat-ci create secret generic git-user-pass \
+  --type=kubernetes.io/basic-auth \
+  --from-literal=username='YOUR_GITHUB_USERNAME' \
+  --from-file=password=/dev/stdin
+unset GITHUB_TOKEN
+oc -n cat-ci annotate secret git-user-pass tekton.dev/git-0=https://github.com
+```
+
+If you run `build-all`, its Argo CD sync Task also needs these resources in `cat-ci` (the server value is a hostname, without `https://`):
+
+```bash
+oc -n cat-ci create configmap argocd-env-configmap --from-literal=ARGOCD_SERVER='YOUR_ARGO_HOST'
+read -rsp 'Argo CD password: ' ARGO_PASSWORD; printf '\n'
+printf '%s' "$ARGO_PASSWORD" | oc -n cat-ci create secret generic argocd-env-secret \
+  --from-literal=ARGOCD_USERNAME=admin \
+  --from-file=ARGOCD_PASSWORD=/dev/stdin
+unset ARGO_PASSWORD
+```
 
 
 
@@ -70,14 +89,12 @@ This will create two namespaces with all roles properly setup so that Argo CD ca
 In order to call one of the build pipelines in `cat-ci`, either call 
 
 ```bash
-./pipeline.sh build-client -u <reg-user> \
-	-p <reg-password>
+./pipeline.sh build-client -r main
 ```
 
 or 
 ```bash
-./pipeline.sh build-server -u <reg-user> \
-	-p <reg-password>
+./pipeline.sh build-server -r main
 ```
 
 
@@ -103,7 +120,7 @@ In order to apply the changes, you need to either merge the branch directly or c
 If you want to start the `build-all` pipeline, you just have to call `tkn` with the following arguments
 
 ```shell
-tkn p start build-all -s pipeline-bot -p repository-password=<your quay password>
+tkn p start build-all -s pipeline-bot --use-param-defaults
 ```
 
 This starts the dev-pipeline and the client-dev-pipeline and waits for both until they are done. It's then telling ArgoCD to do a redeployment of the `cat-dev` app.
