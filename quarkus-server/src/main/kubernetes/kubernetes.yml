@@ -158,7 +158,7 @@ spec:
               requests:
                 storage: 1Gi
 ---
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: Kafka
 metadata:
   labels:
@@ -203,7 +203,7 @@ spec:
     topicOperator: {}
     userOperator: {}
 ---
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
 metadata:
   name: player-actions
