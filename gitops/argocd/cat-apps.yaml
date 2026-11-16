@@ -10,7 +10,7 @@ spec:
   project: default
   source:
     path: config/overlays/dev
-    repoURL: https://github.com/wpernath/grumpycat-config.git
+    repoURL: https://github.com/tkiss28/grumpycat-config.git
     targetRevision: aws-grumpycat
   syncPolicy:
     automated:
@@ -30,7 +30,7 @@ spec:
   project: default
   source:
     path: config/overlays/stage
-    repoURL: https://github.com/wpernath/grumpycat-config.git
+    repoURL: https://github.com/tkiss28/grumpycat-config.git
     targetRevision: aws-grumpycat
   syncPolicy:
     automated:
@@ -50,7 +50,7 @@ spec:
   project: default
   source:
     path: config/overlays/prod
-    repoURL: https://github.com/wpernath/grumpycat-config.git
+    repoURL: https://github.com/tkiss28/grumpycat-config.git
     targetRevision: aws-grumpycat
   syncPolicy:
     automated:

@@ -74,7 +74,7 @@ spec:
         - name: GITHUB_HOST_URL
           value: api.github.com
         - name: REPO_FULL_NAME
-          value: wpernath/grumpycat-config
+          value: tkiss28/grumpycat-config
         - name: GITHUB_TOKEN_SECRET_NAME
           value: git-user-pass
         - name: GITHUB_TOKEN_SECRET_KEY
