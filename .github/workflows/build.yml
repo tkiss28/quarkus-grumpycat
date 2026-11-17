@@ -1,0 +1,71 @@
+name: Build and propose image digest
+
+# Builds the server with Jib on a GitHub-hosted runner, pushes it to Quay
+# under a gh-<sha> tag, then opens a PR with the new digest against
+# tkiss28/grumpycat-config. Mirrors the Tekton build-server pipeline.
+on:
+  push:
+    branches: [gh-ci]
+  # Note: workflow_dispatch only becomes clickable once this file is on the
+  # default branch; until then, push (an empty commit) to gh-ci to trigger.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build and push server image (Jib)
+        env:
+          QUARKUS_CONTAINER_IMAGE_USERNAME: ${{ secrets.QUAY_USERNAME }}
+          QUARKUS_CONTAINER_IMAGE_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+        run: |
+          mvn -B -ntp -pl quarkus-server -am package -DskipTests \
+            -Dquarkus.container-image.build=true \
+            -Dquarkus.container-image.push=true \
+            -Dquarkus.container-image.image=quay.io/rh-ee-tkiss/quarkus-grumpycat:gh-$GITHUB_SHA
+
+      # Checks out the config repo into config/ with push credentials
+      # from the PAT (actions/checkout persists them for git push).
+      - uses: actions/checkout@v4
+        with:
+          repository: tkiss28/grumpycat-config
+          ref: main
+          token: ${{ secrets.CONFIG_PAT }}
+          path: config
+
+      - name: Propose digest update in grumpycat-config
+        env:
+          GH_TOKEN: ${{ secrets.CONFIG_PAT }}
+        run: |
+          DIGEST="$(cat quarkus-server/target/jib-image.digest)"
+          [ -n "$DIGEST" ] || { echo "ERROR: jib-image.digest is empty"; exit 1; }
+          echo "Digest: $DIGEST"
+
+          cd config
+          cd config/overlays/dev
+          kustomize edit set image \
+            quay.io/rh-ee-tkiss/quarkus-grumpycat:latest=quay.io/rh-ee-tkiss/quarkus-grumpycat@$DIGEST
+          cd ../..
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "gh-ci/$GITHUB_SHA"
+          git commit -am "[ci] server image digest updated (build $GITHUB_RUN_NUMBER)"
+          git push origin "gh-ci/$GITHUB_SHA"
+
+          gh pr create --repo tkiss28/grumpycat-config \
+            --base main --head "gh-ci/$GITHUB_SHA" \
+            --title "Update server image digest (${GITHUB_SHA:0:7})" \
+            --body "Built by [GitHub Actions run $GITHUB_RUN_NUMBER]($GITHUB_RUN_URL). Image: \`quay.io/rh-ee-tkiss/quarkus-grumpycat:gh-$GITHUB_SHA\`" \
+            || echo "PR already exists for gh-ci/$GITHUB_SHA"
